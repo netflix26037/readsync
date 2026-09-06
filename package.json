@@ -1,0 +1,17 @@
+{
+  "name": "readsync",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal RSS reader with read-state synced across your own devices, backed by Upstash Redis on Vercel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.31.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "rss-parser": "^3.13.0"
+  }
+}
