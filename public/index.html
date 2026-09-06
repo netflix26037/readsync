@@ -6,12 +6,14 @@
 <title>ReadSync</title>
 <style>
   :root {
-    --bg: #0f1115;
-    --card: #171a21;
-    --text: #e8e8ea;
-    --muted: #8b8f9a;
-    --accent: #5b8cff;
-    --border: #262a33;
+    --bg: #0b0d12;
+    --card: #161a22;
+    --card-hover: #1c212b;
+    --text: #f0f1f3;
+    --muted: #9096a3;
+    --accent: #4f7cff;
+    --accent-soft: rgba(79,124,255,0.15);
+    --border: #262b36;
   }
   * { box-sizing: border-box; }
   body {
@@ -20,60 +22,102 @@
     background: var(--bg);
     color: var(--text);
   }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 80px; }
-  h1 { font-size: 20px; margin: 0 0 16px; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px 80px; }
+  .site-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .site-header h1 { font-size: 22px; margin: 0; letter-spacing: 0.5px; }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 16px;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 18px;
   }
   input {
     width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 11px 14px;
+    border-radius: 9px;
     border: 1px solid var(--border);
-    background: #0c0e12;
+    background: #0d0f14;
     color: var(--text);
     margin-bottom: 8px;
     font-size: 15px;
   }
   button {
-    padding: 10px 14px;
-    border-radius: 8px;
+    padding: 10px 16px;
+    border-radius: 9px;
     border: none;
     background: var(--accent);
     color: white;
-    font-size: 15px;
+    font-size: 14px;
     cursor: pointer;
+    font-weight: 600;
   }
-  button.secondary { background: #2a2f3a; color: var(--text); }
-  button.small { padding: 6px 10px; font-size: 13px; }
-  .row { display: flex; gap: 8px; }
-  .row input { flex: 1; }
+  button.secondary { background: #262b36; color: var(--text); font-weight: 500; }
+  button.small { padding: 6px 12px; font-size: 12.5px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row input { flex: 1; min-width: 160px; }
   #app { display: none; }
-  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .muted { color: var(--muted); font-size: 13px; }
-  .feed-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .feed-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
   .feed-item:last-child { border-bottom: none; }
-  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .feed-item .badge {
+    display: inline-block; background: var(--accent-soft); color: var(--accent);
+    font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-right: 8px;
+  }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .tabs button.active { background: var(--accent); }
-  .article { padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .article:last-child { border-bottom: none; }
-  .article.is-read { opacity: 0.45; }
-  .article a { color: var(--text); text-decoration: none; font-weight: 600; }
-  .article a:hover { text-decoration: underline; }
-  .article .meta { color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
-  .article .snippet { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .article-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .article-card:hover { background: var(--card-hover); }
+  .article-card.is-read { opacity: 0.4; }
+  .article-card .thumb {
+    width: 100%; height: 150px; object-fit: cover; background: #1c212b;
+  }
+  .article-card .thumb.placeholder {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 13px;
+    background: linear-gradient(135deg, #1c212b, #0d0f14);
+  }
+  .article-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill {
+    font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-weight: 600;
+  }
+  .pill.source { background: #262b36; color: var(--muted); }
+  .article-body a.title {
+    color: var(--text); text-decoration: none; font-weight: 700; font-size: 16px; line-height: 1.4;
+  }
+  .article-body a.title:hover { color: var(--accent); }
+  .article-body .snippet { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+  .article-body .orig-title { color: #5a6070; font-size: 11.5px; }
+  .article-body .meta { color: var(--muted); font-size: 11.5px; }
+  .article-actions { margin-top: auto; display: flex; justify-content: flex-end; }
   .error { color: #ff6b6b; font-size: 13px; margin-top: 4px; }
+  .empty-state { text-align: center; padding: 40px 10px; color: var(--muted); }
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <div id="auth" class="card">
-    <h1>ReadSync</h1>
+    <h1 style="margin:0 0 6px;">ReadSync</h1>
     <p class="muted">قارئ مواضيع شخصي — أدخل رمز الدخول نفسه من أي جهاز لديك لمتابعة نفس قائمة المقروء/غير المقروء.</p>
     <input id="code" type="password" placeholder="رمز الدخول">
     <button onclick="doLogin()">دخول</button>
@@ -81,14 +125,15 @@
   </div>
 
   <div id="app">
-    <div class="topbar">
-      <div><strong>ReadSync</strong></div>
+    <div class="site-header">
+      <h1>ReadSync</h1>
       <button class="secondary small" onclick="logout()">تسجيل الخروج</button>
     </div>
 
     <div class="card">
       <div class="row">
         <input id="feedUrl" placeholder="رابط RSS، مثال: https://hnrss.org/frontpage">
+        <input id="feedCategory" placeholder="تصنيف (اختياري)، مثال: تقنية" style="max-width:180px;">
         <button onclick="addFeed()">إضافة</button>
       </div>
       <div id="feedList"></div>
@@ -100,7 +145,7 @@
       <button class="secondary" onclick="loadArticles()">تحديث</button>
     </div>
 
-    <div id="articles" class="card"></div>
+    <div id="articles" class="grid"></div>
   </div>
 
 </div>
@@ -157,7 +202,7 @@ async function loadFeeds() {
     const div = document.createElement('div');
     div.className = 'feed-item';
     div.innerHTML = `
-      <span>${escapeHtml(f.title)}</span>
+      <span><span class="badge">${escapeHtml(f.category || 'عام')}</span>${escapeHtml(f.title)}</span>
       <span>
         <button class="small secondary" onclick="refreshFeed('${f.id}')">تحديث</button>
         <button class="small secondary" onclick="deleteFeed('${f.id}')">حذف</button>
@@ -168,11 +213,13 @@ async function loadFeeds() {
 
 async function addFeed() {
   const url = document.getElementById('feedUrl').value.trim();
+  const category = document.getElementById('feedCategory').value.trim();
   if (!url) return;
-  const res = await fetch('/api/feeds', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ url }) });
+  const res = await fetch('/api/feeds', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ url, category }) });
   const data = await res.json();
   if (!res.ok) { alert(data.error || 'تعذّرت إضافة المصدر'); return; }
   document.getElementById('feedUrl').value = '';
+  document.getElementById('feedCategory').value = '';
   loadFeeds();
   loadArticles();
 }
@@ -200,19 +247,40 @@ async function loadArticles() {
   if (!res.ok) return;
   const articles = await res.json();
   const el = document.getElementById('articles');
-  el.innerHTML = articles.length ? '' : '<p class="muted">لا توجد مواضيع بعد — أضف مصدرًا أعلاه.</p>';
+  if (!articles.length) {
+    el.innerHTML = '<div class="empty-state">لا توجد مواضيع بعد — أضف مصدرًا أعلاه.</div>';
+    return;
+  }
+  el.innerHTML = '';
   articles.forEach(a => {
-    const div = document.createElement('div');
-    div.className = 'article' + (a.read ? ' is-read' : '');
-    const date = new Date(a.publishedAt).toLocaleString();
-    div.innerHTML = `
-      <a href="${a.link}" target="_blank" onclick="markRead('${a.id}', true)">${escapeHtml(a.title)}</a>
-      <div class="meta">${escapeHtml(a.feedTitle || '')} · ${date}</div>
-      <div class="snippet">${escapeHtml(a.snippet || '')}</div>
-      <button class="small secondary" onclick="markRead('${a.id}', ${!a.read})">
-        ${a.read ? 'وضع كغير مقروء' : 'وضع كمقروء'}
-      </button>`;
-    el.appendChild(div);
+    const card = document.createElement('div');
+    card.className = 'article-card' + (a.read ? ' is-read' : '');
+    const date = new Date(a.publishedAt).toLocaleString('ar');
+
+    const thumb = a.image
+      ? `<img class="thumb" src="${a.image}" onerror="this.style.display='none'">`
+      : `<div class="thumb placeholder">لا توجد صورة</div>`;
+
+    card.innerHTML = `
+      ${thumb}
+      <div class="article-body">
+        <div class="badges">
+          <span class="pill">${escapeHtml(a.category || 'عام')}</span>
+          <span class="pill source">${escapeHtml(a.feedTitle || '')}</span>
+        </div>
+        <a class="title" href="${a.link}" target="_blank" onclick="markRead('${a.id}', true)">
+          ${escapeHtml(a.arabicTitle || a.title)}
+        </a>
+        <div class="orig-title">${escapeHtml(a.title)}</div>
+        <div class="snippet">${escapeHtml(a.arabicSnippet || a.snippet || '')}</div>
+        <div class="meta">${date}</div>
+        <div class="article-actions">
+          <button class="small secondary" onclick="markRead('${a.id}', ${!a.read})">
+            ${a.read ? 'وضع كغير مقروء' : 'وضع كمقروء'}
+          </button>
+        </div>
+      </div>`;
+    el.appendChild(card);
   });
 }
 
