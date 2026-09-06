@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const RSSParser = require('rss-parser');
 const path = require('path');
 const { loadDB, saveDB, id, hashArticle } = require('./store');
+const { translateText } = require('./translate');
 
 const app = express();
 const parser = new RSSParser();
@@ -48,7 +49,7 @@ app.get('/api/feeds', auth, async (req, res) => {
 });
 
 app.post('/api/feeds', auth, async (req, res) => {
-  const { url } = req.body || {};
+  const { url, category } = req.body || {};
   if (!url) return res.status(400).json({ error: 'url required' });
   const db = await loadDB();
   if (db.feeds.find(f => f.url === url)) {
@@ -60,9 +61,9 @@ app.post('/api/feeds', auth, async (req, res) => {
   } catch (e) {
     return res.status(400).json({ error: 'could not fetch/parse feed: ' + e.message });
   }
-  const feed = { id: id(), url, title: parsed.title || url };
+  const feed = { id: id(), url, title: parsed.title || url, category: (category || '').trim() || 'عام' };
   db.feeds.push(feed);
-  storeArticles(db, feed, parsed);
+  await storeArticles(db, feed, parsed);
   await saveDB(db);
   res.json(feed);
 });
@@ -86,24 +87,46 @@ app.post('/api/feeds/:feedId/refresh', auth, async (req, res) => {
   } catch (e) {
     return res.status(400).json({ error: 'could not refresh feed: ' + e.message });
   }
-  const added = storeArticles(db, feed, parsed);
+  const added = await storeArticles(db, feed, parsed);
   await saveDB(db);
   res.json({ added });
 });
 
-function storeArticles(db, feed, parsed) {
+function extractImage(item) {
+  if (item['media:content']?.$?.url) return item['media:content'].$.url;
+  if (item['media:thumbnail']?.$?.url) return item['media:thumbnail'].$.url;
+  if (item.enclosure?.url) return item.enclosure.url;
+  return null;
+}
+
+// Translates and stores only genuinely NEW articles (dedup happens first),
+// so each article is ever translated once — this keeps us comfortably
+// within the free translation service's daily quota.
+async function storeArticles(db, feed, parsed) {
   let added = 0;
   for (const item of parsed.items || []) {
     const guid = item.guid || item.link || item.title;
     const articleId = hashArticle(feed.id, guid);
     if (db.articles.find(a => a.id === articleId)) continue;
+
+    const rawTitle = item.title || '(بدون عنوان)';
+    const rawSnippet = (item.contentSnippet || item.summary || '').slice(0, 240);
+
+    const [arabicTitle, arabicSnippet] = await Promise.all([
+      translateText(rawTitle),
+      translateText(rawSnippet),
+    ]);
+
     db.articles.push({
       id: articleId,
       feedId: feed.id,
-      title: item.title || '(no title)',
+      title: rawTitle,
+      arabicTitle: arabicTitle || rawTitle,
+      snippet: rawSnippet,
+      arabicSnippet: arabicSnippet || rawSnippet,
       link: item.link || '',
+      image: extractImage(item),
       publishedAt: item.isoDate || item.pubDate || new Date().toISOString(),
-      snippet: (item.contentSnippet || '').slice(0, 240),
     });
     added++;
   }
@@ -119,12 +142,14 @@ function storeArticles(db, feed, parsed) {
 app.get('/api/articles', auth, async (req, res) => {
   const db = await loadDB();
   const feedTitleById = Object.fromEntries(db.feeds.map(f => [f.id, f.title]));
+  const feedCategoryById = Object.fromEntries(db.feeds.map(f => [f.id, f.category || 'عام']));
   const readSet = new Set(db.readIds);
   const unreadOnly = req.query.unreadOnly === 'true';
 
   let articles = db.articles.map(a => ({
     ...a,
     feedTitle: feedTitleById[a.feedId],
+    category: feedCategoryById[a.feedId],
     read: readSet.has(a.id),
   }));
 
